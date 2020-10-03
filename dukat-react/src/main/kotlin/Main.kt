@@ -11,7 +11,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -35,36 +34,34 @@ object Generate : CliktCommand(name = "generate", help = "Generate Kotlin from T
         .default("com.palantir.blueprintjs") // TODO remove this default
 
     private val outputDir by option("-d", help = "Overrides the directory in which to generate the new key classes") //
-        .file(canBeFile = false, canBeDir = true) //
+        .file(canBeFile = false, canBeDir = true, mustBeWritable = true) //
         .defaultLazy { Paths.get("kotlin-blueprintjs/src/main/kotlin").toFile() }
 
+    private val outputDirPath: Path by lazy { Paths.get(outputDir.absolutePath) }
+
     private val tsDir by argument(name = "TYPESCRIPT_DIR", help = "The directory containing the .d.ts files to convert") //
-        .file(mustExist = true, canBeFile = false, canBeDir = true) //
+        .file(mustExist = true, canBeFile = false, canBeDir = true, mustBeReadable = true) //
         .defaultLazy { Paths.get("build/js/node_modules/@blueprintjs/core/lib/esm").toFile() }
 
     override fun run() = catchAndPrintErrors {
-        val tsTmpDirPath = step("Creating temp dir for TS files...") {
-            Files.createTempDirectory("ts-dukat-temp")
-        }
-        val tsTmpDir = tsTmpDirPath.toFile()
-        tsTmpDir.deleteOnExit()
-        step("Copying TS files to temp dir (to avoid filename bug)...") {
-            tsDir.copyRecursively(tsTmpDir, overwrite = true) { file, ioException ->
-                throw RuntimeException("Error while copying $file", ioException)
-            }
-        }
         val target = Paths.get(outputDir.absolutePath)
         val dirs = tsDir.recursivePathMappings(target) { it.extension == "ts" }
         val tsFiles = dirs.flatMap { it.sourceFiles }.map { it.toPath() }
 
         val ktFiles = step("Running dukat on ${tsFiles.size} TS files...") {
-            runDukat(moduleName, target, tsFiles)
+            runDukat(tsFiles)
         }
 
         step("Post-processing ${ktFiles.size} Kotlin files...") {
             val moduleInFilename = moduleName.replace('/', '_')
             ktFiles.filter { it.toString().endsWith("module_$moduleInFilename.kt") }.forEach(::postProcessKotlinFile)
         }
+    }
+
+    private fun runDukat(tsFiles: List<Path>): List<Path> {
+        val filePaths = tsFiles.map { f -> f.toString() }.toTypedArray()
+        val lines = exec("dukat", "-m", moduleName, "-d", outputDir.toString(), *filePaths)
+        return lines.map { outputDirPath.resolve(it) }
     }
 
     private fun postProcessKotlinFile(ktFilePath: Path) {
