@@ -9,7 +9,7 @@ data class TransformTask(
 )
 
 fun File.recursivePathMappings(targetDir: Path, predicate: (File) -> Boolean): List<TransformTask> {
-    val thisPath = this.toPath()
+    val thisPath = Paths.get(absolutePath)
     return recursiveDirs(predicate).map {
         val relativePath = thisPath.relativize(it.absolutePath)
         TransformTask(
