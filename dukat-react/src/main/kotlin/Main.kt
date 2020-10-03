@@ -6,8 +6,8 @@ import com.github.ajalt.clikt.output.CliktHelpFormatter
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.defaultLazy
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.defaultLazy
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
@@ -36,13 +36,11 @@ object Generate : CliktCommand(name = "generate", help = "Generate Kotlin from T
 
     private val outputDir by option("-d", help = "Overrides the directory in which to generate the new key classes") //
         .file(canBeFile = false, canBeDir = true) //
-        .required()
+        .defaultLazy { Paths.get("kotlin-blueprintjs/src/main/kotlin").toFile() }
 
     private val tsDir by argument(name = "TYPESCRIPT_DIR", help = "The directory containing the .d.ts files to convert") //
         .file(mustExist = true, canBeFile = false, canBeDir = true) //
-        .defaultLazy {
-            Paths.get("build/js/node_modules/@blueprintjs/core/lib/esm").toFile()
-        }
+        .defaultLazy { Paths.get("build/js/node_modules/@blueprintjs/core/lib/esm").toFile() }
 
     override fun run() = catchAndPrintErrors {
         val tsTmpDirPath = step("Creating temp dir for TS files...") {
