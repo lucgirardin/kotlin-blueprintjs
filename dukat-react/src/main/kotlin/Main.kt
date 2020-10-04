@@ -79,9 +79,9 @@ object Generate : CliktCommand(name = "generate", help = "Generate Kotlin from T
     }
 
     private fun postProcessKotlinFile(ktFilePath: Path) {
-        val file = ktFilePath.toFile()
-        val newContents = file.readText().addModuleAndPackage()
-        file.writeText(newContents)
+        ktFilePath.toFile().replaceContents {
+            it.addModuleAndPackage()
+        }
     }
 
     private fun String.addModuleAndPackage(): String {
