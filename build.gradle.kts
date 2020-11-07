@@ -1,9 +1,15 @@
 plugins {
-    kotlin("js") version "1.4.10"
+    kotlin("js") version "1.4.20-M2"
 }
 
 repositories {
     jcenter()
+    maven {
+        url = uri("https://dl.bintray.com/kotlin/kotlin-dev")
+    }
+    maven {
+        url = uri("https://dl.bintray.com/kotlin/kotlinx/")
+    }
     // repository added for kotlin-wrappers resolutions
     maven(url = "https://kotlin.bintray.com/kotlin-js-wrappers")
 }
@@ -26,10 +32,10 @@ kotlin {
                 implementation("org.jetbrains:kotlin-react-dom:$reactVersion-$kotlinWrappersVersion")
                 implementation(npm("react-dom", reactVersion))
 
-                api(npm("@blueprintjs/core", "3.31.0"))
-                api(npm("@blueprintjs/icons", "3.20.1"))
-                api(npm("@types/react", "16.9.49"))
-                api(npm("@types/react-dom", "16.9.8"))
+                api(npm("@blueprintjs/core", "3.35.0"))
+                api(npm("@blueprintjs/icons", "3.22.0"))
+                api(npm("@types/react", "16.9.56"))
+                api(npm("@types/react-dom", "16.9.9"))
             }
         }
         test {
